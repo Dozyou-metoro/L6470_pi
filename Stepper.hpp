@@ -6,7 +6,7 @@
 #include <cmath>
 #include <vector>
 
-#include "../pigpio/pigpio.h"
+#include "../pigpio.h"
 
 #include "MESSAGE_PRINT.h"
 
@@ -27,7 +27,7 @@ private:
 
 public:
     template <typename... type>
-    stepper_motor(type...);
+    stepper_motor(uint32_t spi_speed,uint8_t spi_ch,type...);
     ~stepper_motor();
 
     template <typename... type> // SPIを送信
@@ -35,7 +35,7 @@ public:
 };
 
 template <typename... type>
-stepper_motor::stepper_motor(type... ss_pins)
+stepper_motor::stepper_motor(uint32_t spi_speed,uint8_t spi_ch,type... ss_pins)
 {
     system("sudo killall pigpiod");
 
@@ -43,6 +43,8 @@ stepper_motor::stepper_motor(type... ss_pins)
     {
         ERROR_PRINT("GPIOの初期化に失敗しました。", -1);
     }
+
+    gpio_set(ss_pins...);
 
     spi_handle = spiOpen(spi_ch, spi_speed, 0);
 
