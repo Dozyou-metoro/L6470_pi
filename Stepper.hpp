@@ -15,15 +15,14 @@ class stepper_motor
 private:
     uint32_t spi_speed = 1000000;
     uint8_t spi_ch = 0;
-    std::vector<uint8_t> ss_pin;
+    std::vector<uint8_t> ss_pin_list;
     int spi_handle = 0;
 
     template <typename... type> // ピンの入出力を設定
     void gpio_set(uint8_t set_ss_pin, type... ss_pins);
     void gpio_set(void);
 
-    template <typename... type> // ピンの入出力を設定
-    void send_data(uint8_t motor_no, type... data);
+
 
 public:
     template <typename... type>
@@ -32,6 +31,11 @@ public:
 
     template <typename... type> // SPIを送信
     void spi_write(int SS_pin, uint8_t front_data, type... data);
+
+    void spi_write(int SS_pin);
+
+    template <typename... type> // 任意のモーターにSPIを送信
+    void send_data(uint8_t motor_no, type... data);
 
     uint8_t get_motor_num(void);
 };
@@ -66,9 +70,10 @@ void stepper_motor::gpio_set(uint8_t set_ss_pin, type... ss_pins)
     gpioSetMode(set_ss_pin, PI_OUTPUT);
     gpioWrite(set_ss_pin, PI_HIGH);
 
-    ss_pin.push_back(set_ss_pin);
+    ss_pin_list.push_back(set_ss_pin);
+    printf("PIN_SET:%d",set_ss_pin);
 
-    gpio_set(ss_pins);
+    gpio_set(ss_pins...);
 }
 
 void stepper_motor::gpio_set(void)
@@ -76,11 +81,11 @@ void stepper_motor::gpio_set(void)
 }
 
 template <typename... type> // ピンの入出力を設定
-void stepper_motor::send_data(uint8_t motor_no, type... data)
+inline void stepper_motor::send_data(uint8_t motor_no, type... data)
 {
-    if (ss_pin.size() > motor_no)
+    if (ss_pin_list.size() > motor_no)
     { // 実在しないモーターが指定されたら何もしない
-        spi_write(ss_pin[motor_no], data...);
+        spi_write(ss_pin_list[motor_no], data...);
     }
     else
     {
@@ -88,17 +93,21 @@ void stepper_motor::send_data(uint8_t motor_no, type... data)
 }
 
 template <typename... type>
-void stepper_motor::spi_write(int SS_pin, uint8_t front_data, type... data)
+inline void stepper_motor::spi_write(int SS_pin, uint8_t front_data, type... data)
 {
     gpioWrite(SS_pin, PI_LOW);
-    spiWrite(spi_handle, &front_data, sizeof(char));
+    spiWrite(spi_handle, (char*)&front_data, sizeof(char));
     gpioWrite(SS_pin, PI_HIGH);
 
     spi_write(SS_pin, data...);
 }
 
+inline void stepper_motor::spi_write(int SS_pin){
+
+}
+
 uint8_t stepper_motor::get_motor_num(void){
-    return ss_pin.size();
+    return ss_pin_list.size();
 }
 
 #endif
