@@ -32,6 +32,8 @@ public:
 
     template <typename... type> // SPIを送信
     void spi_write(int SS_pin, uint8_t front_data, type... data);
+
+    uint8_t get_motor_num(void);
 };
 
 template <typename... type>
@@ -85,8 +87,6 @@ void stepper_motor::send_data(uint8_t motor_no, type... data)
     }
 }
 
-#endif
-
 template <typename... type>
 void stepper_motor::spi_write(int SS_pin, uint8_t front_data, type... data)
 {
@@ -96,3 +96,10 @@ void stepper_motor::spi_write(int SS_pin, uint8_t front_data, type... data)
 
     spi_write(SS_pin, data...);
 }
+
+uint8_t stepper_motor::get_motor_num(void){
+    return ss_pin.size();
+}
+
+#endif
+
